@@ -30,6 +30,6 @@ async def user_logout(token: str=Depends(get_token), db: AsyncSession=Depends(ge
     return await user_service.logout_user(token=token, db=db)
 
 
-@router.delete("", status_code=status.HTTP_200_OK)
+@router.delete("/", status_code=status.HTTP_200_OK)
 async def user_delete(current_user: Users=Depends(get_current_user), db: AsyncSession=Depends(get_session)):
     return await user_service.delete_user(current_user=current_user, db=db)
