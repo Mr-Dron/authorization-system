@@ -18,8 +18,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
-def verify_password(plain_password: str, hashed_passwrod: str):
-    return pwd_context.verify(plain_password, hashed_passwrod)
+def verify_password(plain_password: str, hashed_password: str):
+    return pwd_context.verify(plain_password, hashed_password)
 
 ### короткий токен
 def create_access_token(user_id: int):
@@ -50,14 +50,14 @@ def verify_access_token(token: str):
     return payload
 
 ### долгий токен 
-def create_refresh_token(user_id: int, db: AsyncSession) -> str:
+async def create_refresh_token(user_id: int, db: AsyncSession) -> str:
     token = secrets.token_urlsafe(32)
 
     db_token = Tokens(user_id=user_id,
                       token=token)
     
     db.add(db_token)
-    db.commit()
+    await db.commit()
 
     return token
 

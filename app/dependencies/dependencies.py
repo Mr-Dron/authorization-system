@@ -8,7 +8,7 @@ from app.db.database import AsyncSessionLocal
 from app.models import Users, Tokens
 from app.config.security import verify_access_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login/swag/")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login/")
 
 # контекст менеджер сессии
 async def get_session() -> AsyncSession:

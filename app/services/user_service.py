@@ -39,31 +39,32 @@ async def login_user(login_data: user_schemas.UserLogin, db: AsyncSession):
         raise ValueError("User not found")
     
     access_token = security.create_access_token(user.id)
-    refresh_token = security.create_refresh_token(user_id=user.id, db=db)
+    refresh_token = await security.create_refresh_token(user_id=user.id, db=db)
 
     return {"access_token": access_token,
             "refresh_token": refresh_token,
             "type_token": "bearer"}
 
-async def login_user_swag(login_data: user_schemas.UserLoginSwag, db: AsyncSession):
+#функция для тестирования через swagger
+# async def login_user_swag(login_data: user_schemas.UserLoginSwag, db: AsyncSession):
 
-    print(login_data.username)
-    stmt = (
-        select(Users)
-        .where(Users.email == login_data.username)
-    )
+#     print(login_data.username)
+#     stmt = (
+#         select(Users)
+#         .where(Users.email == login_data.username)
+#     )
 
-    user = (await db.execute(stmt)).scalar_one_or_none()
+#     user = (await db.execute(stmt)).scalar_one_or_none()
 
-    if not user:
-        raise ValueError("User not found")
+#     if not user:
+#         raise ValueError("User not found")
     
-    access_token = security.create_access_token(user.id)
-    refresh_token = security.create_refresh_token(user_id=user.id, db=db)
+#     access_token = security.create_access_token(user.id)
+#     refresh_token = await security.create_refresh_token(user_id=user.id, db=db)
 
-    return {"access_token": access_token,
-            "refresh_token": refresh_token,
-            "type_token": "bearer"}
+#     return {"access_token": access_token,
+#             "refresh_token": refresh_token,
+#             "type_token": "bearer"}
 
 
 async def update_user(user_data: user_schemas.UserUpdate, current_user: Users, db: AsyncSession):
