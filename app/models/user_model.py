@@ -1,5 +1,7 @@
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime
+from sqlalchemy import Column, String, Boolean, Text, DateTime
+
+from datetime import datetime, timezone
 
 from app.db.database import Base
 
@@ -13,7 +15,10 @@ class Users(Base):
     hashed_password = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     
-    last_seen = Column(DateTime, index=True)
+    online = Column(Boolean, default=False, index=True)
+    create_at = Column(DateTime, default=datetime.now(timezone.utc))
+
+    last_seen = Column(DateTime, default=datetime.now(timezone.utc), index=True)
     is_active = Column(Boolean, default=True)
 
     groups_roles = relationship("GroupMembers", back_populates="user")

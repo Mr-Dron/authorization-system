@@ -14,4 +14,3 @@ class Tokens(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     token = Column(String, nullable=False, index=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    expires_at = Column(DateTime, default=lambda: datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN))

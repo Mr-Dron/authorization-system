@@ -4,6 +4,7 @@ from sqlalchemy import select, update, delete
 from fastapi import HTTPException
 
 from app.schemas import user_schemas
+from app.dependencies.dependencies import set_user_status
 from app.models import Users, Tokens
 from app.config import security
 
@@ -27,7 +28,6 @@ async def create_user(user_data: user_schemas.UserRegistration, db: AsyncSession
 
 async def login_user(login_data: user_schemas.UserLogin, db: AsyncSession):
 
-    print(login_data.email)
     stmt = (
         select(Users)
         .where(Users.email == login_data.email)
@@ -35,20 +35,24 @@ async def login_user(login_data: user_schemas.UserLogin, db: AsyncSession):
 
     user = (await db.execute(stmt)).scalar_one_or_none()
 
-    if not user:
-        raise ValueError("User not found")
+    if (not user or 
+        not security.verify_password(login_data.password, user.hashed_password) or 
+        user.is_active):
+        raise HTTPException(status_code=400, detail="Login error")
+    
     
     access_token = security.create_access_token(user.id)
     refresh_token = await security.create_refresh_token(user_id=user.id, db=db)
+
+    await set_user_status(state=True)(user=user, db=db)
 
     return {"access_token": access_token,
             "refresh_token": refresh_token,
             "type_token": "bearer"}
 
-#функция для тестирования через swagger
+# функция для тестирования через swagger
 # async def login_user_swag(login_data: user_schemas.UserLoginSwag, db: AsyncSession):
 
-#     print(login_data.username)
 #     stmt = (
 #         select(Users)
 #         .where(Users.email == login_data.username)
@@ -56,11 +60,16 @@ async def login_user(login_data: user_schemas.UserLogin, db: AsyncSession):
 
 #     user = (await db.execute(stmt)).scalar_one_or_none()
 
-#     if not user:
-#         raise ValueError("User not found")
+#     if (not user or 
+#         not security.verify_password(login_data.password, user.hashed_password) or 
+#         user.is_active):
+#         raise HTTPException(status_code=400, detail="Login error")
+    
     
 #     access_token = security.create_access_token(user.id)
 #     refresh_token = await security.create_refresh_token(user_id=user.id, db=db)
+
+#     await set_user_status(state=True)(user=user, db=db)
 
 #     return {"access_token": access_token,
 #             "refresh_token": refresh_token,
@@ -81,15 +90,15 @@ async def update_user(user_data: user_schemas.UserUpdate, current_user: Users, d
     updated_user = (await db.execute(stmt)).scalar_one_or_none()
 
     if not updated_user:
-        raise ValueError("User not found error")
+        raise HTTPException(status_code=404, detail="User not found error")
     
     return updated_user
 
 
-async def logout_user(token: str, db: AsyncSession):
+async def logout_user(refresh_token: str, db: AsyncSession):
 
     stmt = (delete(Tokens)
-            .where(Tokens.token == token))
+            .where(Tokens.token == refresh_token))
     
     result = await db.execute(stmt)
     await db.commit()
@@ -109,17 +118,12 @@ async def delete_user(current_user: Users, db: AsyncSession):
         .returning(Tokens)
     )
 
-    (await db.execute(stmt)).scalars().all()
+    await db.execute(stmt)
 
-    stmt = (update(Users.is_active)
-            .values(False)
-            .where(Users.id == current_user.id)
-            .returning(Users))
+    current_user.is_active = False
 
-    deleted_user = (await db.execute(stmt)).scalar_one_or_none()
-
-    if not deleted_user:
-        raise HTTPException(status_code=404, detail="User not found")
+    db.add(current_user)
+    await db.commit
     
     return {"message": "user deleted"}
 

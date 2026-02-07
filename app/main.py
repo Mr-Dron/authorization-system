@@ -1,8 +1,11 @@
+import asyncio
+
 from fastapi import FastAPI, status
 from contextlib import asynccontextmanager
 
 from app.routers import users, groups, posts, roles
 from app.db.populating_db import filling_db
+from app.tasks.scheduler import scheduler
 
 
 @asynccontextmanager
@@ -12,8 +15,11 @@ async def lifespan(app: FastAPI):
     async with AsyncSessionLocal() as session:
         await filling_db(db=session)
     
+    task = asyncio.create_task(scheduler())
+
     yield
 
+    task.cancel()
 
 
 app = FastAPI(lifespan=lifespan)
