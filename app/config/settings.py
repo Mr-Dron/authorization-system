@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     ALGORITHM: str
     SECRET_KEY: str
 
+    #Online
+    TIME_SINCE_LAST_REQUEST: int
+
     
 
     class Config:
